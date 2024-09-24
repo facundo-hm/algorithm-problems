@@ -12,7 +12,7 @@ There are 3 ways to make change for n = 3: {1, 1, 1},
 {1, 2}, and 3.
 '''
 
-def getWays(n, c):
+def get_ways(n, c):
     memo = dict()
 
     for cent in c:
