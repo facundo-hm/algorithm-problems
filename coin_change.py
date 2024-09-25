@@ -12,8 +12,8 @@ There are 3 ways to make change for n = 3: {1, 1, 1},
 {1, 2}, and 3.
 '''
 
-def get_ways(n, c):
-    memo = dict()
+def get_ways(n: int, c: list[int]) -> int:
+    memo: dict[int, int] = dict()
 
     for cent in c:
         current_c_value = cent        

@@ -12,7 +12,7 @@ The maximum height candles are 4 units high.
 There are 2 of them, so return 2.
 '''
 
-def birthday_cake_candles(candles):
+def birthday_cake_candles(candles: list[int]) -> int:
     tallest_candles = 0
     tallest_value = candles[0]
 
