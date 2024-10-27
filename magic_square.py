@@ -16,12 +16,11 @@ def forming_magic_square(s):
     
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
-    s_idx = 0
-    num = 1
-    
     print('s', s)
     print('s_flat', s_flat)
-    
+
+    s_idx = 0
+    num = 1
     missing_num = []
     
     while num < 10:
@@ -49,7 +48,19 @@ def forming_magic_square(s):
     
     diag_0 = [0, 4, 8]
     diag_1 = [2, 4, 6]
+
+    all_matrix_groups = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6],
+        [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
     
+    all_matrix_groups_sum = [
+        sum([s_flat[mg_idx] for mg_idx in mg])
+        for mg in all_matrix_groups
+    ]
+
+    print('all_matrix_groups_sum', all_matrix_groups_sum)
+    print('all_matrix_groups_total_sum', sum(all_matrix_groups_sum))
+
     matrix_groups_by_idxs = [
         [row_0, col_0, diag_0],
         [row_0, col_1],
@@ -62,38 +73,41 @@ def forming_magic_square(s):
         [row_2, col_2, diag_0]
     ]
     
-    # def is_changeable_idx(idx_groups, changeable_idxs):
-    def is_changeable_idx(idx_groups):
+    def is_changeable_idx(idx_groups, changeable_idxs):
+        # BUG: Repeated numbers can have only some of their groups incompleted.
+        # Identify them independently from this function based on some priority.
+
         # Check if the idx_groups are already cover
         # by the combination of previous idxs.
         incompleted_idx_groups = [
             idx_group
             for idx_group in idx_groups
             if sum([s_flat[ig] for ig in idx_group]) != 15]
-
-        return len(incompleted_idx_groups) == len(idx_groups)
-
-        # if not len(changeable_idxs):
-        #     return len(incompleted_idx_groups) == len(idx_groups)
         
-        # changeable_idx_groups = [
-        #     group
-        #     for idx in changeable_idxs
-        #     for group in matrix_groups_by_idxs[idx]
-        # ]
-        
-        # uncovered_groups = [
-        #     idx_group
-        #     for idx_group in incompleted_idx_groups
-        #     if idx_group not in changeable_idx_groups]
+        print('------------------------')
+        print('idx_groups', idx_groups)
+        print('incompleted_idx_groups', incompleted_idx_groups)
 
-        # return len(incompleted_idx_groups) == len(idx_groups) and len(uncovered_groups)
+        if not len(changeable_idxs):
+            return len(incompleted_idx_groups) == len(idx_groups)
+        
+        changeable_idx_groups = [
+            group
+            for idx in changeable_idxs
+            for group in matrix_groups_by_idxs[idx]
+        ]
+        
+        uncovered_groups = [
+            idx_group
+            for idx_group in incompleted_idx_groups
+            if idx_group not in changeable_idx_groups]
+
+        return len(incompleted_idx_groups) == len(idx_groups) and len(uncovered_groups)
         
     changeable_idxs = []
     
     for idx, idx_group in enumerate(matrix_groups_by_idxs):
-        # if is_changeable_idx(idx_group, changeable_idxs):
-        if is_changeable_idx(idx_group):
+        if is_changeable_idx(idx_group, changeable_idxs):
             changeable_idxs.append(idx)
 
     print('changeable_idxs', changeable_idxs)
