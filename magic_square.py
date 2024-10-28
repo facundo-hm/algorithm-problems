@@ -19,25 +19,6 @@ def forming_magic_square(s):
     print('s', s)
     print('s_flat', s_flat)
 
-    s_idx = 0
-    num = 1
-    missing_num = []
-    
-    while num < 10:
-        if s_idx > 8 or num < s_sorted[s_idx]:
-            missing_num.append(num)
-            num += 1
-            continue
-
-        if num > s_sorted[s_idx]:
-            s_idx += 1
-            continue
-
-        num += 1
-        s_idx += 1
-
-    print('missing_num', missing_num)
-
     row_0 = [0, 1, 2]
     row_1 = [3, 4, 5]
     row_2 = [6, 7, 8]
@@ -72,25 +53,66 @@ def forming_magic_square(s):
         [row_2, col_1],
         [row_2, col_2, diag_0]
     ]
-    
-    def is_changeable_idx(idx_groups, changeable_idxs):
-        # BUG: Repeated numbers can have only some of their groups incompleted.
-        # Identify them independently from this function based on some priority.
 
-        # Check if the idx_groups are already cover
-        # by the combination of previous idxs.
-        incompleted_idx_groups = [
+    def get_missing_numbers(s_sorted):
+        s_idx = 0
+        num = 1
+        missing_num = []
+        
+        while num < 10:
+            if s_idx > 8 or num < s_sorted[s_idx]:
+                missing_num.append(num)
+                num += 1
+                continue
+
+            if num > s_sorted[s_idx]:
+                s_idx += 1
+                continue
+
+            num += 1
+            s_idx += 1
+
+        return missing_num
+
+    def get_incomplete_groups(idx_groups):
+        return [
             idx_group
             for idx_group in idx_groups
             if sum([s_flat[ig] for ig in idx_group]) != 15]
-        
-        print('------------------------')
-        print('idx_groups', idx_groups)
-        print('incompleted_idx_groups', incompleted_idx_groups)
 
-        if not len(changeable_idxs):
-            return len(incompleted_idx_groups) == len(idx_groups)
+    def get_repeated_idxs():
+        repeated_vals = {}
+
+        for idx, val in enumerate(s_flat):
+            rest = s_flat[idx+1:]
+
+            if val in rest or val in repeated_vals:
+                if val not in repeated_vals:
+                    repeated_vals[val] = idx
+                    continue
+
+                prev_idx_groups = matrix_groups_by_idxs[repeated_vals[val]]
+                prev_incomplete_groups = get_incomplete_groups(prev_idx_groups)
+
+                curr_idx_groups = matrix_groups_by_idxs[idx]
+                curr_incomplete_groups = get_incomplete_groups(curr_idx_groups)
+
+                if curr_incomplete_groups > prev_incomplete_groups:
+                    repeated_vals[val] = idx
+
+        return repeated_vals
+
+    repeated_idxs = get_repeated_idxs()
+    print('repeated_idxs', repeated_idxs)
+
+    def is_changeable_idx(idx_groups, changeable_idxs):
+        incomplete_idx_groups = get_incomplete_groups(idx_group)
         
+        if not len(changeable_idxs):
+            return len(incomplete_idx_groups) == len(idx_groups)
+
+        # Check if the idx_groups are already cover
+        # by the combination of previous idxs.        
         changeable_idx_groups = [
             group
             for idx in changeable_idxs
@@ -99,12 +121,17 @@ def forming_magic_square(s):
         
         uncovered_groups = [
             idx_group
-            for idx_group in incompleted_idx_groups
+            for idx_group in incomplete_idx_groups
             if idx_group not in changeable_idx_groups]
 
-        return len(incompleted_idx_groups) == len(idx_groups) and len(uncovered_groups)
-        
-    changeable_idxs = []
+        return (
+            len(incomplete_idx_groups) == len(idx_groups)
+            and len(uncovered_groups))
+
+    missing_num = get_missing_numbers(s_sorted)
+    print('missing_num', missing_num)
+
+    changeable_idxs = list(repeated_idxs)
     
     for idx, idx_group in enumerate(matrix_groups_by_idxs):
         if is_changeable_idx(idx_group, changeable_idxs):
