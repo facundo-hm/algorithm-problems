@@ -131,7 +131,7 @@ def forming_magic_square(s):
     missing_num = get_missing_numbers(s_sorted)
     print('missing_num', missing_num)
 
-    changeable_idxs = list(repeated_idxs)
+    changeable_idxs = list(repeated_idxs.values())
     
     for idx, idx_group in enumerate(matrix_groups_by_idxs):
         if is_changeable_idx(idx_group, changeable_idxs):
@@ -153,7 +153,8 @@ def forming_magic_square(s):
         new_unique_groups = [
             ci_group
             for ci_group in ci_groups
-            if ci_group not in unique_groups]
+            if ci_group not in unique_groups and sum(
+                [s_flat[idx] for idx in ci_group]) != 15]
         unique_groups.extend(new_unique_groups)
     
     print('unique_groups', unique_groups)
@@ -191,8 +192,8 @@ def forming_magic_square(s):
 
     new_values_diff = abs(len(missing_num) - len(changeable_values))
     new_values = ([
-        [*missing_num, *changeable_values[n:n+new_values_diff]]
-        for n in range(0, len(changeable_values), new_values_diff)]
+        [*missing_num, *n]
+        for n in itertools.permutations(changeable_values, new_values_diff)]
         if len(missing_num)
         else changeable_values)
     
@@ -205,12 +206,19 @@ def forming_magic_square(s):
             permutation_sum = sum([
                 nv_permutation[idx] * len(matrix_groups_by_idxs[c_idx])
                 for idx, c_idx in enumerate(changeable_idxs)])
-            
+
+            # BUG: Some difference are lower than they should be.
+            # Check this condition to avoid wrong updates.
             if permutation_sum == final_value_without_remainder:
                 differences = [
                     abs(matched_values[0] - matched_values[1])
                     for matched_values
-                    in zip(nv_permutation, changeable_values)]
+                    in zip(nv_permutation, changeable_values)
+                    if matched_values[0] != matched_values[1]]
+                
+                if len(differences) != len(changeable_values):
+                    continue
+
                 differences_sum = sum(differences)
 
                 if differences_sum < total_diff_sum:
@@ -221,6 +229,7 @@ def forming_magic_square(s):
                 print('differences_sum', differences_sum)
                 print('permutation_sum', permutation_sum)
                 print('nv_permutation', nv_permutation)
+                print('changeable_values', changeable_values)
     
     # Identify indexes that have to be changed by checking
     # that all each of its gorups doesn't add up to 15.
@@ -247,13 +256,17 @@ def forming_magic_square(s):
     # 48-42 = 6
     
     return total_diff_sum
+test_case_0 = [[4, 9, 2], [3, 5, 7], [8, 1, 5]]
+test_case_0_result = 1
 
+test_case_1 = [[4, 8, 2], [4, 5, 7], [6, 1, 6]]
+test_case_1_result = 4
 
-test_case_1 = [[4, 5, 8], [2, 4, 1], [1, 9, 7]]
-test_case_1_result = 14
+test_case_2 = [[4, 5, 8], [2, 4, 1], [1, 9, 7]]
+test_case_2_result = 14
 
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_1)
+result = forming_magic_square(test_case_18)
 print('result', result)
