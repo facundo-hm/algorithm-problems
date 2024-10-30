@@ -7,7 +7,7 @@ def forming_magic_square(s):
     # where key=sum_result and value=[[indexes], ...].
     # Iterate map and calculate which sum_result has more indexes.
     # Use the choosen sum_result to modify the rest of the indexes to
-    # obtein the same sum_result with the least cost.
+    # obtain the same sum_result with the least cost.
     
     # The sum of the combinations differences needed to reach the magic
     # constant is the final result.
@@ -91,11 +91,14 @@ def forming_magic_square(s):
                     repeated_vals[val] = idx
                     continue
 
-                prev_idx_groups = matrix_groups_by_idxs[repeated_vals[val]]
-                prev_incomplete_groups = get_incomplete_groups(prev_idx_groups)
+                prev_idx_groups = matrix_groups_by_idxs[
+                    repeated_vals[val]]
+                prev_incomplete_groups = get_incomplete_groups(
+                    prev_idx_groups)
 
                 curr_idx_groups = matrix_groups_by_idxs[idx]
-                curr_incomplete_groups = get_incomplete_groups(curr_idx_groups)
+                curr_incomplete_groups = get_incomplete_groups(
+                    curr_idx_groups)
 
                 if curr_incomplete_groups > prev_incomplete_groups:
                     repeated_vals[val] = idx
@@ -107,26 +110,27 @@ def forming_magic_square(s):
 
     def is_changeable_idx(idx_groups, changeable_idxs):
         incomplete_idx_groups = get_incomplete_groups(idx_group)
-        
-        if not len(changeable_idxs):
-            return len(incomplete_idx_groups) == len(idx_groups)
 
-        # Check if the idx_groups are already cover
-        # by the combination of previous idxs.        
-        changeable_idx_groups = [
-            group
-            for idx in changeable_idxs
-            for group in matrix_groups_by_idxs[idx]
-        ]
-        
-        uncovered_groups = [
-            idx_group
-            for idx_group in incomplete_idx_groups
-            if idx_group not in changeable_idx_groups]
+        if len(incomplete_idx_groups) == len(idx_groups):
+            if not len(changeable_idxs):
+                return True
 
-        return (
-            len(incomplete_idx_groups) == len(idx_groups)
-            and len(uncovered_groups))
+            # Check if the idx_groups are already cover
+            # by the combination of previous idxs.        
+            changeable_idx_groups = [
+                group
+                for idx in changeable_idxs
+                for group in matrix_groups_by_idxs[idx]
+            ]
+            
+            uncovered_groups = [
+                idx_group
+                for idx_group in incomplete_idx_groups
+                if idx_group not in changeable_idx_groups]
+
+            return bool(uncovered_groups)
+        
+        return False
 
     missing_num = get_missing_numbers(s_sorted)
     print('missing_num', missing_num)
@@ -153,47 +157,55 @@ def forming_magic_square(s):
         new_unique_groups = [
             ci_group
             for ci_group in ci_groups
-            if ci_group not in unique_groups and sum(
-                [s_flat[idx] for idx in ci_group]) != 15]
+            # if ci_group not in unique_groups and sum(
+            #     [s_flat[idx] for idx in ci_group]) != 15]
+            if ci_group not in unique_groups]
         unique_groups.extend(new_unique_groups)
     
     print('unique_groups', unique_groups)
     
-    ug_values_sum = sum([
-        s_flat[ug_index]
-        for ug_indexes in unique_groups
-        for ug_index in ug_indexes
+    unique_groups_curr_value = sum([
+        s_flat[unique_group_index]
+        for unique_group_idxs in unique_groups
+        for unique_group_index in unique_group_idxs
     ])
     
-    print('ug_values_sum', ug_values_sum)
+    print('unique_groups_curr_value', unique_groups_curr_value)
     
-    ug_final_value = 15 * len(unique_groups)
+    unique_groups_final_value = 15 * len(unique_groups)
     
-    print('ug_final_value', ug_final_value)
+    print('unique_groups_final_value', unique_groups_final_value)
     
-    ug_difference = ug_final_value - ug_values_sum
+    unique_groups_difference = abs(
+        unique_groups_final_value - unique_groups_curr_value)
     
-    print('ug_difference', ug_difference)
-    
-    ci_total_value = sum([
-        s_flat[ci] * len(matrix_groups_by_idxs[ci])
-        for ci in changeable_idxs
+    print('unique_groups_difference', unique_groups_difference)
+
+    changeable_idxs_total_value = sum([
+        s_flat[changeable_idx] * len([
+            changeable_idx
+            for unique_group in unique_groups
+            if changeable_idx in unique_group])
+        for changeable_idx in changeable_idxs
     ])
     
-    print('ci_total_value', ci_total_value)
+    print('changeable_idxs_total_value', changeable_idxs_total_value)
     
-    current_remainder = ug_values_sum - ci_total_value
+    current_remainder = (
+        unique_groups_curr_value - changeable_idxs_total_value)
     
     print('current_remainder', current_remainder)
     
-    final_value_without_remainder = ug_final_value - current_remainder
+    final_value_without_remainder = (
+        unique_groups_final_value - current_remainder)
     
     print('value to get', final_value_without_remainder)
 
     new_values_diff = abs(len(missing_num) - len(changeable_values))
     new_values = ([
         [*missing_num, *n]
-        for n in itertools.permutations(changeable_values, new_values_diff)]
+        for n in itertools.permutations(
+            changeable_values, new_values_diff)]
         if len(missing_num)
         else changeable_values)
     
@@ -202,10 +214,15 @@ def forming_magic_square(s):
     total_diff_sum = float('inf')
 
     for new_value in new_values:
-        for nv_permutation in itertools.permutations(new_value, len(new_value)):
+        for nv_permutation in itertools.permutations(
+            new_value, len(new_value)
+        ):
             permutation_sum = sum([
-                nv_permutation[idx] * len(matrix_groups_by_idxs[c_idx])
-                for idx, c_idx in enumerate(changeable_idxs)])
+                nv_permutation[idx] * len([
+                    changeable_idx
+                    for unique_group in unique_groups
+                    if changeable_idx in unique_group])
+                for idx, changeable_idx in enumerate(changeable_idxs)])
 
             # BUG: Some difference are lower than they should be.
             # Check this condition to avoid wrong updates.
@@ -231,31 +248,39 @@ def forming_magic_square(s):
                 print('nv_permutation', nv_permutation)
                 print('changeable_values', changeable_values)
     
-    # Identify indexes that have to be changed by checking
-    # that all each of its gorups doesn't add up to 15.
+    '''
+    Identify indexes that have to be changed by checking
+    that all each of its gorups doesn't add up to 15.
     
-    # If there is no missing numbers, try by switching indexes
-    # that have to be changed.
+    If there is no missing numbers, try by switching indexes
+    that have to be changed.
     
-    # Compute the value to achieve with the new numbers combination.
-    # Add the values of all lines.
-    # 14+14+14+16+13+13 = 84
-    # Compute the lines total final value.
-    # 15*6 = 90
-    # Difference between final and current total values.
-    # 90-84 = 6
-    # Total value of the number to be changed.
-    # 8*2+4*2+6*3 = 42
-    # Total value of the new numbers.
-    # 9*2+3*2+8*3 = 48
-    # Current remainder without the number to be changed total value.
-    # 84-42 = 42
-    # Final tota value without current reminder
-    # 90-42 = 48
-    # Difference between total values of new numbers and number to be changed.
-    # 48-42 = 6
+    Compute the value to achieve with the new numbers combination.
+    [[4, 8, 2], [4, 5, 7], [6, 1, 6]]
+    - Add the values of all uinique lines.
+    14 + 14 + 14 + 16 + 13 + 13 = 84
+    - Compute the lines total final value.
+    15*6 = 90
+    - Difference between final and current total values.
+    90 - 84 = 6
+    - Total value of the numbers to be changed, where each one
+    is multiplied by the times that appears in each unique line.
+    8*2 + 4*2 + 6*3 = 42
+    - Total value of the new numbers after being placed in
+    the square idx.
+    9*2 + 3*2 + 8*3 = 48
+    - Remainder of the current total value without the numbers
+    to be changed total value.
+    84 - 42 = 42
+    - Final total value without current remainder.
+    90 - 42 = 48
+    - Difference between total values of new numbers and
+    number to be changed.
+    48 - 42 = 6
+    '''
     
     return total_diff_sum
+
 test_case_0 = [[4, 9, 2], [3, 5, 7], [8, 1, 5]]
 test_case_0_result = 1
 
@@ -268,5 +293,5 @@ test_case_2_result = 14
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_18)
+result = forming_magic_square(test_case_2)
 print('result', result)
