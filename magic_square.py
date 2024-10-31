@@ -136,6 +136,7 @@ def forming_magic_square(s):
     print('missing_num', missing_num)
 
     changeable_idxs = list(repeated_idxs.values())
+    # changeable_idxs = [6, 8]
     
     for idx, idx_group in enumerate(matrix_groups_by_idxs):
         if is_changeable_idx(idx_group, changeable_idxs):
@@ -150,61 +151,28 @@ def forming_magic_square(s):
     
     print('changeable_values', changeable_values)
     
-    unique_groups = []
+    unique_groups = [
+        group
+        for changeable_idx in changeable_idxs
+        for group in matrix_groups_by_idxs[changeable_idx]]
+    # unique_groups = []
     
-    for changeable_idx in changeable_idxs:
-        ci_groups = matrix_groups_by_idxs[changeable_idx]
-        new_unique_groups = [
-            ci_group
-            for ci_group in ci_groups
-            # if ci_group not in unique_groups and sum(
-            #     [s_flat[idx] for idx in ci_group]) != 15]
-            if ci_group not in unique_groups]
-        unique_groups.extend(new_unique_groups)
+    # for changeable_idx in changeable_idxs:
+    #     ci_groups = matrix_groups_by_idxs[changeable_idx]
+    #     new_unique_groups = [
+    #         ci_group
+    #         for ci_group in ci_groups
+    #         # if ci_group not in unique_groups and sum(
+    #         #     [s_flat[idx] for idx in ci_group]) != 15]
+    #         if ci_group not in unique_groups]
+    #     unique_groups.extend(new_unique_groups)
     
     print('unique_groups', unique_groups)
-    
-    unique_groups_curr_value = sum([
-        s_flat[unique_group_index]
-        for unique_group_idxs in unique_groups
-        for unique_group_index in unique_group_idxs
-    ])
-    
-    print('unique_groups_curr_value', unique_groups_curr_value)
-    
-    unique_groups_final_value = 15 * len(unique_groups)
-    
-    print('unique_groups_final_value', unique_groups_final_value)
-    
-    unique_groups_difference = abs(
-        unique_groups_final_value - unique_groups_curr_value)
-    
-    print('unique_groups_difference', unique_groups_difference)
-
-    changeable_idxs_total_value = sum([
-        s_flat[changeable_idx] * len([
-            changeable_idx
-            for unique_group in unique_groups
-            if changeable_idx in unique_group])
-        for changeable_idx in changeable_idxs
-    ])
-    
-    print('changeable_idxs_total_value', changeable_idxs_total_value)
-    
-    current_remainder = (
-        unique_groups_curr_value - changeable_idxs_total_value)
-    
-    print('current_remainder', current_remainder)
-    
-    final_value_without_remainder = (
-        unique_groups_final_value - current_remainder)
-    
-    print('value to get', final_value_without_remainder)
 
     new_values_diff = abs(len(missing_num) - len(changeable_values))
     new_values = ([
         [*missing_num, *n]
-        for n in itertools.permutations(
+        for n in itertools.combinations(
             changeable_values, new_values_diff)]
         if len(missing_num)
         else changeable_values)
@@ -217,37 +185,49 @@ def forming_magic_square(s):
         for nv_permutation in itertools.permutations(
             new_value, len(new_value)
         ):
-            permutation_sum = sum([
-                nv_permutation[idx] * len([
-                    changeable_idx
-                    for unique_group in unique_groups
-                    if changeable_idx in unique_group])
-                for idx, changeable_idx in enumerate(changeable_idxs)])
+            unique_groups_copy = unique_groups[:]
+            permutations_by_changeable_idx = {
+                ci: nv_permutation[idx]
+                for idx, ci in enumerate(changeable_idxs)}
 
-            # BUG: Some difference are lower than they should be.
-            # Check this condition to avoid wrong updates.
-            if permutation_sum == final_value_without_remainder:
-                differences = [
-                    abs(matched_values[0] - matched_values[1])
-                    for matched_values
-                    in zip(nv_permutation, changeable_values)
-                    if matched_values[0] != matched_values[1]]
-                
-                if len(differences) != len(changeable_values):
-                    continue
+            unique_groups_sums = []
 
-                differences_sum = sum(differences)
+            for unique_group in unique_groups_copy:
+                unique_group_values = [
+                    permutations_by_changeable_idx[ug_idx]
+                    if ug_idx in changeable_idxs
+                    else s_flat[ug_idx]
+                    for ug_idx in unique_group
+                ]
+                unique_group_sum = sum(unique_group_values)
+                unique_groups_sums.append(unique_group_sum)
 
-                if differences_sum < total_diff_sum:
-                    total_diff_sum = differences_sum
+            unique_groups_total_sum = sum(unique_groups_sums)
 
-                print('----------')
-                print('differences', differences)
-                print('differences_sum', differences_sum)
-                print('permutation_sum', permutation_sum)
-                print('nv_permutation', nv_permutation)
-                print('changeable_values', changeable_values)
-    
+            if unique_groups_total_sum / len(unique_groups_sums) != 15:
+                continue
+
+            differences = [
+                abs(matched_values[0] - matched_values[1])
+                for matched_values
+                in zip(nv_permutation, changeable_values)
+                if matched_values[0] != matched_values[1]]
+            
+            if len(differences) != len(changeable_values):
+                continue
+
+            differences_sum = sum(differences)
+
+            if differences_sum < total_diff_sum:
+                total_diff_sum = differences_sum
+
+            print('----------')
+            print('unique_groups_sums', unique_groups_sums)
+            print('differences', differences)
+            print('differences_sum', differences_sum)
+            print('nv_permutation', nv_permutation)
+            print('changeable_values', changeable_values)
+
     '''
     Identify indexes that have to be changed by checking
     that all each of its gorups doesn't add up to 15.
@@ -293,5 +273,9 @@ test_case_2_result = 14
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_2)
+result = forming_magic_square(test_case_18)
 print('result', result)
+
+
+# [[3, 4, 5], [0, 3, 6], [6, 7, 8], [2, 4, 6], [0, 1, 2], [1, 4, 7]]
+# [3, 6, 1]
