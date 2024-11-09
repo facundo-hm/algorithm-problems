@@ -1,8 +1,7 @@
 # Problem in progress
-import itertools
-from collections import Counter
 
 def forming_magic_square(s):
+    MAGIC_NUM = 15
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
     print('s', s)
@@ -19,7 +18,7 @@ def forming_magic_square(s):
     diag_0 = [0, 4, 8]
     diag_1 = [2, 4, 6]
 
-    matrix_groups_by_idxs = [
+    matrix_lines_by_idx = [
         [row_0, col_0, diag_0],
         [row_0, col_1],
         [row_0, col_2, diag_1],
@@ -30,6 +29,38 @@ def forming_magic_square(s):
         [row_2, col_1],
         [row_2, col_2, diag_0]
     ]
+
+    def get_diffs_by_idx(s_current: list[int]):
+        idx_diffs = [[
+                MAGIC_NUM - sum(s_current[idx] for idx in line)
+                for line in lines]
+            for lines in matrix_lines_by_idx]
+        
+        return idx_diffs
+
+    diffs_by_idx = get_diffs_by_idx(s_flat)
+    print('diffs_by_idx', diffs_by_idx)
+
+    def get_average_diff_by_idx(
+        diff_by_idxs: list[list[int]], s_current: list[int]
+    ):
+        idx_average_diffs = [
+            s_current[idx_diffs]
+            + round(sum(line_diffs) / len(line_diffs))
+            for idx_diffs, line_diffs in enumerate(diff_by_idxs)]
+
+        return list(zip(s_current, idx_average_diffs))
+
+    average_diff_by_idx = get_average_diff_by_idx(diffs_by_idx, s_flat)
+    print('average_diff_by_idx', average_diff_by_idx)
+
+    def get_total_diff(diff_by_idxs: list[list[int]]):
+        return sum([sum([
+                abs(diff) for diff in line_diffs])
+            for line_diffs in diff_by_idxs])
+    
+    total_diff = get_total_diff(diffs_by_idx)
+    print('total_diff', total_diff)
 
     def get_missing_numbers(s_sorted):
         s_idx = 0
