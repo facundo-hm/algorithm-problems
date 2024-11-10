@@ -18,27 +18,42 @@ def forming_magic_square(s):
     diag_0 = [0, 4, 8]
     diag_1 = [2, 4, 6]
 
+    square_lines = [
+        col_0, col_1, col_2,
+        row_0, row_1, row_2,
+        diag_0, diag_1]
+
     matrix_lines_by_idx = [
-        [row_0, col_0, diag_0],
-        [row_0, col_1],
-        [row_0, col_2, diag_1],
-        [row_1, col_0],
-        [row_1, col_1, diag_0, diag_1],
-        [row_1, col_2],
-        [row_2, col_0, diag_1],
-        [row_2, col_1],
-        [row_2, col_2, diag_0]
+        [3, 0, 6],
+        [3, 1],
+        [3, 2, 7],
+        [4, 0],
+        [4, 1, 6, 7],
+        [4, 2],
+        [5, 0, 7],
+        [5, 1],
+        [5, 2, 6]
     ]
 
-    def get_diffs_by_idx(s_current: list[int]):
+    def get_diffs_by_line_idxs(s_current: list[int]):
+        line_diffs = [
+            MAGIC_NUM - sum(
+                [s_current[idx] for idx in line])
+            for line in square_lines]
+        
+        return line_diffs
+    
+    diffs_by_line_idxs = get_diffs_by_line_idxs(s_flat)
+    print('diffs_by_line_idxs', diffs_by_line_idxs)
+
+    def get_diffs_by_square_idx(line_diffs: list[int]):
         idx_diffs = [[
-                MAGIC_NUM - sum(s_current[idx] for idx in line)
-                for line in lines]
+                line_diffs[line_idx] for line_idx in lines]
             for lines in matrix_lines_by_idx]
         
         return idx_diffs
 
-    diffs_by_idx = get_diffs_by_idx(s_flat)
+    diffs_by_idx = get_diffs_by_square_idx(diffs_by_line_idxs)
     print('diffs_by_idx', diffs_by_idx)
 
     def get_average_diff_by_idx(
@@ -54,12 +69,10 @@ def forming_magic_square(s):
     average_diff_by_idx = get_average_diff_by_idx(diffs_by_idx, s_flat)
     print('average_diff_by_idx', average_diff_by_idx)
 
-    def get_total_diff(diff_by_idxs: list[list[int]]):
-        return sum([sum([
-                abs(diff) for diff in line_diffs])
-            for line_diffs in diff_by_idxs])
+    def get_total_diff(line_diffs: list[int]):
+        return sum([abs(diff) for diff in line_diffs])
     
-    total_diff = get_total_diff(diffs_by_idx)
+    total_diff = get_total_diff(diffs_by_line_idxs)
     print('total_diff', total_diff)
 
     def get_missing_numbers(s_sorted):
