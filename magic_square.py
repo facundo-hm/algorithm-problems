@@ -4,6 +4,7 @@ def forming_magic_square(s):
     MAGIC_NUM = 15
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
+    total_sum_diffs = 0
     print('s', s)
     print('s_flat', s_flat)
 
@@ -98,29 +99,25 @@ def forming_magic_square(s):
     missing_num = get_missing_numbers(s_sorted)
     print('missing_num', missing_num)
 
-    def get_incomplete_groups(idx_groups):
-        return [
-            idx_group
-            for idx_group in idx_groups
-            if sum([s_flat[ig] for ig in idx_group]) != 15]
-
-    def get_repeated_idxs():
-        repeated_vals = {}
+    def get_repeated_vals():
+        repeated_vals = set()
 
         for idx, val in enumerate(s_flat):
             rest = s_flat[idx+1:]
 
-            if val in rest or val in repeated_vals:
-                if val not in repeated_vals:
-                    repeated_vals[val] = [idx]
-                    continue
-
-                repeated_vals[val].append(idx)
+            if val in rest:
+                repeated_vals.add(val)
 
         return repeated_vals
+    
+    repeated_vals = get_repeated_vals()
+    print('repeated_vals', repeated_vals)
+
+    def update_square():
+        ...
 
 
-    return None
+    return total_sum_diffs
 
 test_case_0 = [[4, 9, 2], [3, 5, 7], [8, 1, 5]]
 test_case_0_result = 1
