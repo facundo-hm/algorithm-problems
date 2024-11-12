@@ -57,7 +57,7 @@ def forming_magic_square(s):
     diffs_by_idx = get_diffs_by_square_idx(diffs_by_line_idxs)
     print('diffs_by_idx', diffs_by_idx)
 
-    def get_average_diff_by_idx(
+    def get_idx_diff_pairs(
         diff_by_idxs: list[list[int]], s_current: list[int]
     ):
         idx_average_diffs = [
@@ -65,10 +65,17 @@ def forming_magic_square(s):
             + round(sum(line_diffs) / len(line_diffs))
             for idx_diffs, line_diffs in enumerate(diff_by_idxs)]
 
-        return list(zip(s_current, idx_average_diffs))
+        idx_diff_pairs = [
+            pair
+            for pair in zip(range(len(s_current)), idx_average_diffs)
+            if s_current[pair[0]] != pair[1]]
 
-    average_diff_by_idx = get_average_diff_by_idx(diffs_by_idx, s_flat)
-    print('average_diff_by_idx', average_diff_by_idx)
+        return sorted(
+            idx_diff_pairs,
+            key=lambda pair: abs(s_current[pair[0]] - pair[1]))
+
+    idx_diff_pairs = get_idx_diff_pairs(diffs_by_idx, s_flat)
+    print('idx_diff_pairs', idx_diff_pairs)
 
     def get_total_diff(line_diffs: list[int]):
         return sum([abs(diff) for diff in line_diffs])
@@ -113,7 +120,12 @@ def forming_magic_square(s):
     repeated_vals = get_repeated_vals()
     print('repeated_vals', repeated_vals)
 
-    def update_square():
+    def get_next_switch(
+        idx_diff_pairs: list[tuple[int, int]], s_current:list[int]
+    ):
+        ...
+
+    def update_square(current_s: list[int]):
         ...
 
 
