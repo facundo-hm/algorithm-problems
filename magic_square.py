@@ -4,7 +4,10 @@ def forming_magic_square(s):
     MAGIC_NUM = 15
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
+    global total_sum_diffs
+    global switch_diffs
     total_sum_diffs = 0
+    switch_diffs = 0
     print('s', s)
     print('s_flat', s_flat)
 
@@ -82,8 +85,8 @@ def forming_magic_square(s):
         initial_diffs_by_line_idxs, s_flat)
     print('initial_idx_diff_pairs', initial_idx_diff_pairs)
     
-    initial_total_diff = get_total_diff(initial_diffs_by_line_idxs)
-    print('initial_total_diff', initial_total_diff)
+    total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
+    print('initial_total_diff', total_sum_diffs)
 
     def get_missing_numbers(s_sorted):
         s_idx = 0
@@ -141,8 +144,25 @@ def forming_magic_square(s):
     def update_square(
         idx_diff_pairs: list[tuple[int, int]], s_current: list[int]
     ):
+        print('///////////////////////////////')
+
+        print('missing_num', missing_num)
+        print('repeated_vals', repeated_vals)
+
+        print('idx_diff_pairs', idx_diff_pairs)
+        print('s_current', s_current)
+
+        global total_sum_diffs
+        global switch_diffs
+
+        if not len(idx_diff_pairs) or total_sum_diffs == 0:
+            return switch_diffs
+
         next_switch = get_next_switch(idx_diff_pairs, s_current)
         print('next_switch', next_switch)
+
+        if not next_switch:
+            return switch_diffs
 
         add_item, remove_item = next_switch[1], next_switch[0]
         add_item_idx, add_item_val = add_item[0], add_item[1]
@@ -151,29 +171,41 @@ def forming_magic_square(s):
         s_new = s_current[:]
         s_new[remove_item_idx] = add_item_val
 
-        if add_item_idx != None:
+        if add_item_idx is not None:
             s_new[add_item_idx] = remove_item_val
 
-        if add_item_idx == None:
-            missing_num.remove(add_item_val)
-
-            if remove_item_val not in repeated_vals:
-                missing_num.append(remove_item_val)
+        print('s_new', s_new)
 
         new_diffs_by_line_idxs = get_diffs_by_line_idxs(s_new)
         print('new_diffs_by_line_idxs', new_diffs_by_line_idxs)
 
         new_idx_diff_pairs = get_idx_diff_pairs(
-            new_diffs_by_line_idxs, s_flat)
+            new_diffs_by_line_idxs, s_new)
         print('new_idx_diff_pairs', new_idx_diff_pairs)
         
-        mew_total_diff = get_total_diff(new_diffs_by_line_idxs)
-        print('mew_total_diff', mew_total_diff)
+        new_total_sum_diffs = get_total_diff(new_diffs_by_line_idxs)
+        print('new_total_sum_diffs', new_total_sum_diffs)
 
+        if new_total_sum_diffs <= total_sum_diffs:
+            total_sum_diffs = new_total_sum_diffs
+            switch_diffs += abs(remove_item_val - add_item_val)
 
-    update_square(initial_idx_diff_pairs, s_flat)
+            if add_item_idx is None:
+                missing_num.remove(add_item_val)
 
-    return total_sum_diffs
+                if remove_item_val not in repeated_vals:
+                    missing_num.append(remove_item_val)
+                else:
+                    repeated_vals.remove(remove_item_val)
+
+            return update_square(new_idx_diff_pairs, s_new)
+        
+        next_idx_diff_pairs = idx_diff_pairs[1:]
+        return update_square(next_idx_diff_pairs, s_current)
+
+    return update_square(initial_idx_diff_pairs, s_flat)
+
+    # return total_sum_diffs
 
 test_case_0 = [[4, 9, 2], [3, 5, 7], [8, 1, 5]]
 test_case_0_result = 1
