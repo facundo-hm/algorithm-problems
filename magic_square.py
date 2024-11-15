@@ -1,15 +1,17 @@
 # Problem in progress
 
-def forming_magic_square(s):
+def forming_magic_square(s: list[list[int]]):
     MAGIC_NUM = 15
+
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
+    print('s', s)
+    print('s_flat', s_flat)
+
     global total_sum_diffs
     global switch_diffs
     total_sum_diffs = 0
     switch_diffs = 0
-    print('s', s)
-    print('s_flat', s_flat)
 
     row_0 = [0, 1, 2]
     row_1 = [3, 4, 5]
@@ -78,16 +80,6 @@ def forming_magic_square(s):
     def get_total_diff(line_diffs: list[int]):
         return sum([abs(diff) for diff in line_diffs])
 
-    initial_diffs_by_line_idxs = get_diffs_by_line_idxs(s_flat)
-    print('initial_diffs_by_line_idxs', initial_diffs_by_line_idxs)
-
-    initial_idx_diff_pairs = get_idx_diff_pairs(
-        initial_diffs_by_line_idxs, s_flat)
-    print('initial_idx_diff_pairs', initial_idx_diff_pairs)
-    
-    total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
-    print('initial_total_diff', total_sum_diffs)
-
     def get_missing_numbers(s_sorted):
         s_idx = 0
         num = 1
@@ -108,9 +100,6 @@ def forming_magic_square(s):
 
         return missing_num
 
-    missing_num = get_missing_numbers(s_sorted)
-    print('missing_num', missing_num)
-
     def get_repeated_vals():
         repeated_vals = set()
 
@@ -121,9 +110,6 @@ def forming_magic_square(s):
                 repeated_vals.add(val)
 
         return repeated_vals
-    
-    repeated_vals = get_repeated_vals()
-    print('repeated_vals', repeated_vals)
 
     def get_next_switch(
         idx_diff_pairs: list[tuple[int, int]], s_current:list[int]
@@ -140,6 +126,22 @@ def forming_magic_square(s):
                 remove_item,
                 (s_current.index(first_item_diff), first_item_diff))
 
+    initial_diffs_by_line_idxs = get_diffs_by_line_idxs(s_flat)
+    print('initial_diffs_by_line_idxs', initial_diffs_by_line_idxs)
+
+    initial_idx_diff_pairs = get_idx_diff_pairs(
+        initial_diffs_by_line_idxs, s_flat)
+    initial_idx_diff_pairs = [(1, 9), (2, 3), (8, 7), (6, 8), (7, 3)]
+    print('initial_idx_diff_pairs', initial_idx_diff_pairs)
+    
+    total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
+    print('initial_total_diff', total_sum_diffs)
+
+    missing_num = get_missing_numbers(s_sorted)
+    print('missing_num', missing_num)
+    
+    repeated_vals = get_repeated_vals()
+    print('repeated_vals', repeated_vals)
 
     def update_square(
         idx_diff_pairs: list[tuple[int, int]], s_current: list[int]
@@ -162,7 +164,8 @@ def forming_magic_square(s):
         print('next_switch', next_switch)
 
         if not next_switch:
-            return switch_diffs
+            next_idx_diff_pairs = idx_diff_pairs[1:]
+            return update_square(next_idx_diff_pairs, s_current)
 
         add_item, remove_item = next_switch[1], next_switch[0]
         add_item_idx, add_item_val = add_item[0], add_item[1]
@@ -205,8 +208,6 @@ def forming_magic_square(s):
 
     return update_square(initial_idx_diff_pairs, s_flat)
 
-    # return total_sum_diffs
-
 test_case_0 = [[4, 9, 2], [3, 5, 7], [8, 1, 5]]
 test_case_0_result = 1
 
@@ -219,5 +220,5 @@ test_case_2_result = 14
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_2)
+result = forming_magic_square(test_case_1)
 print('result', result)
