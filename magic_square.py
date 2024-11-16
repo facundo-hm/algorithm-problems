@@ -41,45 +41,6 @@ def forming_magic_square(s: list[list[int]]):
         [5, 2, 6]
     ]
 
-    def get_diffs_by_line_idxs(s_current: list[int]):
-        line_diffs = [
-            MAGIC_NUM - sum(
-                [s_current[idx] for idx in line])
-            for line in square_lines]
-        
-        return line_diffs
-
-    def get_diffs_by_square_idx(line_diffs: list[int]):
-        idx_diffs = [[
-                line_diffs[line_idx] for line_idx in lines]
-            for lines in matrix_lines_by_idx]
-        
-        return idx_diffs
-
-    def get_idx_diff_pairs(
-        diffs_by_line_idxs: list[int],
-        s_current: list[int]
-    ):
-        diff_by_idxs = get_diffs_by_square_idx(diffs_by_line_idxs)
-        print('diff_by_idxs', diff_by_idxs)
-        
-        idx_average_diffs = [
-            s_current[idx_diffs]
-            + round(sum(line_diffs) / len(line_diffs))
-            for idx_diffs, line_diffs in enumerate(diff_by_idxs)]
-
-        idx_diff_pairs = [
-            pair
-            for pair in zip(range(len(s_current)), idx_average_diffs)
-            if s_current[pair[0]] != pair[1]]
-
-        return sorted(
-            idx_diff_pairs,
-            key=lambda pair: abs(s_current[pair[0]] - pair[1]))
-    
-    def get_total_diff(line_diffs: list[int]):
-        return sum([abs(diff) for diff in line_diffs])
-
     def get_missing_numbers(s_sorted):
         s_idx = 0
         num = 1
@@ -111,6 +72,52 @@ def forming_magic_square(s: list[list[int]]):
 
         return repeated_vals
 
+    missing_num = get_missing_numbers(s_sorted)
+    print('missing_num', missing_num)
+
+    repeated_vals = get_repeated_vals()
+    print('repeated_vals', repeated_vals)
+
+    def get_diffs_by_line_idxs(s_current: list[int]):
+        line_diffs = [
+            MAGIC_NUM - sum(
+                [s_current[idx] for idx in line])
+            for line in square_lines]
+        
+        return line_diffs
+
+    def get_diffs_by_square_idx(line_diffs: list[int]):
+        idx_diffs = [[
+                line_diffs[line_idx] for line_idx in lines]
+            for lines in matrix_lines_by_idx]
+        
+        return idx_diffs
+
+    def get_idx_diff_pairs(
+        diffs_by_line_idxs: list[int],
+        s_current: list[int]
+    ):
+        diff_by_idxs = get_diffs_by_square_idx(diffs_by_line_idxs)
+        print('diff_by_idxs', diff_by_idxs)
+        
+        idx_diff_lines = {
+            (idx_diffs, s_current[idx_diffs] + line_diff)
+            for idx_diffs, line_diffs in enumerate(diff_by_idxs)
+            for line_diff in line_diffs
+            if 0 not in line_diffs and (s_current[idx_diffs] + line_diff) > 0}
+        print('idx_diff_lines', idx_diff_lines)
+
+        sorted_idx_diff_lines = sorted(
+            list(idx_diff_lines),
+            key=lambda pair: (
+                abs(s_current[pair[0]] - pair[1]),
+                pair[1] not in missing_num))
+
+        return sorted_idx_diff_lines
+    
+    def get_total_diff(line_diffs: list[int]):
+        return sum([abs(diff) for diff in line_diffs])
+
     def get_next_switch(
         idx_diff_pairs: list[tuple[int, int]], s_current:list[int]
     ):
@@ -131,17 +138,10 @@ def forming_magic_square(s: list[list[int]]):
 
     initial_idx_diff_pairs = get_idx_diff_pairs(
         initial_diffs_by_line_idxs, s_flat)
-    initial_idx_diff_pairs = [(1, 9), (2, 3), (8, 7), (6, 8), (7, 3)]
     print('initial_idx_diff_pairs', initial_idx_diff_pairs)
     
     total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
     print('initial_total_diff', total_sum_diffs)
-
-    missing_num = get_missing_numbers(s_sorted)
-    print('missing_num', missing_num)
-    
-    repeated_vals = get_repeated_vals()
-    print('repeated_vals', repeated_vals)
 
     def update_square(
         idx_diff_pairs: list[tuple[int, int]], s_current: list[int]
