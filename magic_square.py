@@ -2,7 +2,7 @@
 
 def forming_magic_square(s: list[list[int]]):
     MAGIC_NUM = 15
-    MAX_DEPTH = 10
+    MAX_DEPTH = 5
 
     s_flat = [n for ng in s for n in ng]
     s_sorted = sorted(s_flat)
@@ -116,8 +116,9 @@ def forming_magic_square(s: list[list[int]]):
         sorted_idx_diff_lines = sorted(
             list(idx_diff_lines),
             key=lambda pair: (
-                abs(s_current[pair[0]] - pair[1]),
-                pair[1] not in missing_num))
+                pair[1] not in missing_num,
+                s_current[pair[0]] not in repeated_vals,
+                abs(s_current[pair[0]] - pair[1])))
 
         return sorted_idx_diff_lines
     
@@ -144,50 +145,58 @@ def forming_magic_square(s: list[list[int]]):
         
         return get_next_switch(idx_diff_pairs[1:], s_current)
 
+    def get_next_s(
+        switch_items: tuple[tuple[int, int]],
+        s_current: list[int]
+    ):
+        add_item, remove_item = switch_items[1], switch_items[0]
+        add_item_idx, add_item_val = add_item[0], add_item[1]
+        remove_item_idx, remove_item_val = (
+            remove_item[0], remove_item[1])
+
+        s_new = s_current[:]
+        s_new[remove_item_idx] = add_item_val
+
+        if add_item_idx is not None:
+            s_new[add_item_idx] = remove_item_val
+
     def update_square(
         idx_diff_pairs: list[tuple[int, int]],
-        s_current: list[int], max_depth: int,
+        s_current: list[int],
+        max_depth: int,
         seen_vals: list[tuple[int, int]] = []
     ):
         global total_sum_diffs
         global switch_diffs
 
+        print('------------------')
+        print(f'missing_num: {missing_num}, repeated_vals: {repeated_vals}')
+        print('s_current', s_current)
+        print('idx_diff_pairs', idx_diff_pairs)
+        # print('seen_vals', seen_vals)
+
         if (total_sum_diffs == 0 or max_depth == 0):
             return switch_diffs
         
         next_switch = get_next_switch(idx_diff_pairs, s_current)
-
-        print('------------------')
-        # print('missing_num', missing_num)
-        # print('repeated_vals', repeated_vals)
-        # print('idx_diff_pairs', idx_diff_pairs)
-        # print('s_current', s_current)
-        print('max_depth', max_depth)
-        # print('seen_vals', seen_vals)
-        print('switch_diffs', switch_diffs)
-        print('total_sum_diffs', total_sum_diffs)
         print('next_switch', next_switch)
 
         if not next_switch:
             return switch_diffs
 
+        s_new = get_next_s(next_switch, s_current)
+
         add_item, remove_item = next_switch[1], next_switch[0]
         add_item_idx, add_item_val = add_item[0], add_item[1]
-        remove_item_idx, remove_item_val = (
-            remove_item[0], remove_item[1])
-        s_new = s_current[:]
-        s_new[remove_item_idx] = add_item_val
+        remove_item_val = remove_item[1]
         seen_vals.append(remove_item)
-
-        if add_item_idx is not None:
-            s_new[add_item_idx] = remove_item_val
 
         new_diffs_by_line_idxs = get_diffs_by_line_idxs(s_new)
         new_total_sum_diffs = get_total_diff(new_diffs_by_line_idxs)
         new_idx_diff_pairs = get_idx_diff_pairs(
             new_diffs_by_line_idxs, s_new, seen_vals)
 
-        print('new_diffs_by_line_idxs', new_diffs_by_line_idxs)
+        # print('new_diffs_by_line_idxs', new_diffs_by_line_idxs)
         # print('s_new', s_new)
         # print('new_total_sum_diffs', new_total_sum_diffs)
         # print('new_idx_diff_pairs', new_idx_diff_pairs)
@@ -197,6 +206,9 @@ def forming_magic_square(s: list[list[int]]):
 
         total_sum_diffs = new_total_sum_diffs
         switch_diffs += abs(remove_item_val - add_item_val)
+
+        print(
+            f'max_depth: {max_depth}, switch_diffs: {switch_diffs}, total_sum_diffs: {total_sum_diffs}')
 
         if add_item_idx is None:
             missing_num.remove(add_item_val)
@@ -210,7 +222,7 @@ def forming_magic_square(s: list[list[int]]):
 
     initial_diffs_by_line_idxs = get_diffs_by_line_idxs(s_flat)
     initial_idx_diff_pairs = get_idx_diff_pairs(
-        initial_diffs_by_line_idxs, s_flat)
+        initial_diffs_by_line_idxs, s_flat, [])
     initial_total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
 
     print('initial_diffs_by_line_idxs', initial_diffs_by_line_idxs)
@@ -230,7 +242,7 @@ def forming_magic_square(s: list[list[int]]):
 
         result = update_square([idx_diff_pair], s_flat, MAX_DEPTH, [])
 
-        print('result', result)
+        print('\nresult', result)
         print('total_sum_diffs', total_sum_diffs)
         print('missing_num', missing_num)
         print('repeated_vals', repeated_vals)
@@ -247,5 +259,5 @@ test_case_2_result = 14
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_2)
+result = forming_magic_square(test_case_1)
 print('result', result)
