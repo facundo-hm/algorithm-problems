@@ -100,14 +100,16 @@ def forming_magic_square(s: list[list[int]]):
         seen_vals: list[tuple[int, int]] = []
     ):
         diff_by_idxs = get_diffs_by_square_idx(diffs_by_line_idxs)
-        # print('diff_by_idxs', diff_by_idxs)
+        print('diff_by_idxs', diff_by_idxs)
+
+        last_seen = seen_vals[-1][0] if len(seen_vals) else None
         
         idx_diff_lines = {
             (idx_diffs, s_current[idx_diffs] + line_diff)
             for idx_diffs, line_diffs in enumerate(diff_by_idxs)
             for line_diff in line_diffs
             if (
-                (idx_diffs, s_current[idx_diffs]) not in seen_vals and
+                idx_diffs != last_seen and
                 (s_current[idx_diffs] + line_diff) != s_current[idx_diffs]
                 and (s_current[idx_diffs] + line_diff) > 0 and
                 (s_current[idx_diffs] + line_diff) < 10)}
@@ -133,7 +135,6 @@ def forming_magic_square(s: list[list[int]]):
         least_diff_sum = float('inf')
 
         for idx_diff_pair in idx_diff_pairs:
-            # first_item = idx_diff_pair
             first_item_idx: int = idx_diff_pair[0]
             first_item_diff: int = idx_diff_pair[1]
 
@@ -160,13 +161,13 @@ def forming_magic_square(s: list[list[int]]):
             # is bet on the sake of future better result.
             if (
                 new_total_sum_diffs < least_diff_sum
-                and switch_diff <= (least_diff_val + 1)
+                and switch_diff <= least_diff_val
             ):
                 least_diff_sum = new_total_sum_diffs
                 least_diff_val = switch_diff
                 least_diff_switch = next_switch
             
-            # print(f'least_diff_switch {least_diff_switch}, least_diff_val {least_diff_val}, least_diff_sum {least_diff_sum}')
+            print(f'least_diff_switch {least_diff_switch}, least_diff_val {least_diff_val}, least_diff_sum {least_diff_sum}')
 
         return least_diff_switch
 
@@ -175,15 +176,11 @@ def forming_magic_square(s: list[list[int]]):
         s_current: list[int]
     ):
         add_item, remove_item = switch_items[1], switch_items[0]
-        add_item_idx, add_item_val = add_item[0], add_item[1]
-        remove_item_idx, remove_item_val = (
-            remove_item[0], remove_item[1])
+        add_item_val = add_item[1]
+        remove_item_idx = remove_item[0]
 
         s_new = s_current[:]
         s_new[remove_item_idx] = add_item_val
-
-        if add_item_idx is not None:
-            s_new[add_item_idx] = remove_item_val
 
         return s_new
 
@@ -244,6 +241,13 @@ def forming_magic_square(s: list[list[int]]):
                 missing_num.append(remove_item_val)
             else:
                 repeated_vals.remove(remove_item_val)
+        else:
+            if remove_item_val in repeated_vals:
+                repeated_vals.remove(remove_item_val)
+            else:
+                missing_num.append(remove_item_val)
+
+            repeated_vals.append(add_item_val)
 
         return update_square(new_idx_diff_pairs, s_new, max_depth, seen_vals)
 
@@ -280,6 +284,7 @@ def forming_magic_square(s: list[list[int]]):
             final_result = result
 
         print('\nresult', result)
+        print('final_result', final_result)
         print('total_sum_diffs', total_sum_diffs)
         print('missing_num', missing_num)
         print('repeated_vals', repeated_vals)
@@ -301,5 +306,5 @@ test_case_2_result = 14
 test_case_18 = [[6, 9, 8], [3, 9, 4], [9, 4, 4]]
 test_case_18_result = 21
 
-result = forming_magic_square(test_case_2)
+result = forming_magic_square(test_case_18)
 print('result', result)
