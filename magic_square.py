@@ -97,12 +97,10 @@ def forming_magic_square(s: list[list[int]]):
     def get_idx_diff_pairs(
         diffs_by_line_idxs: list[int],
         s_current: list[int],
-        seen_vals: list[tuple[int, int]] = []
+        last_seen: int = None
     ):
         diff_by_idxs = get_diffs_by_square_idx(diffs_by_line_idxs)
-        print('diff_by_idxs', diff_by_idxs)
-
-        last_seen = seen_vals[-1][0] if len(seen_vals) else None
+        # print('diff_by_idxs', diff_by_idxs)
         
         idx_diff_lines = {
             (idx_diffs, s_current[idx_diffs] + line_diff)
@@ -122,63 +120,17 @@ def forming_magic_square(s: list[list[int]]):
                 s_current[pair[0]] not in repeated_vals,
                 abs(s_current[pair[0]] - pair[1])))
 
-        return sorted_idx_diff_lines
+        # return sorted_idx_diff_lines
+        return idx_diff_lines
     
     def get_total_diff(line_diffs: list[int]):
         return sum([abs(diff) for diff in line_diffs])
 
-    def get_next_switch(
-        idx_diff_pairs: list[tuple[int, int]], s_current:list[int]
-    ):
-        least_diff_switch = None
-        least_diff_val = float('inf')
-        least_diff_sum = float('inf')
-
-        for idx_diff_pair in idx_diff_pairs:
-            first_item_idx: int = idx_diff_pair[0]
-            first_item_diff: int = idx_diff_pair[1]
-
-            if (
-                first_item_diff not in missing_num
-                and first_item_diff not in s_current
-            ):
-                continue
-
-            remove_item = first_item_idx, s_current[first_item_idx]
-            add_item_idx = (
-                None if first_item_diff in missing_num
-                # it could have the same val in different idxs
-                else s_current.index(first_item_diff))
-            add_item = add_item_idx, first_item_diff
-            switch_diff = abs(remove_item[1] - add_item[1])
-            next_switch = remove_item, add_item
-
-            s_new = get_next_s(next_switch, s_current)
-            new_diffs_by_line_idxs = get_diffs_by_line_idxs(s_new)
-            new_total_sum_diffs = get_total_diff(new_diffs_by_line_idxs)
-
-            # this condition is not consider the case where a greater total_sum
-            # is bet on the sake of future better result.
-            if (
-                new_total_sum_diffs < least_diff_sum
-                and switch_diff <= least_diff_val
-            ):
-                least_diff_sum = new_total_sum_diffs
-                least_diff_val = switch_diff
-                least_diff_switch = next_switch
-            
-            print(f'least_diff_switch {least_diff_switch}, least_diff_val {least_diff_val}, least_diff_sum {least_diff_sum}')
-
-        return least_diff_switch
-
     def get_next_s(
-        switch_items: tuple[tuple[int, int]],
+        switch_items: tuple[int, int],
         s_current: list[int]
     ):
-        add_item, remove_item = switch_items[1], switch_items[0]
-        add_item_val = add_item[1]
-        remove_item_idx = remove_item[0]
-
+        remove_item_idx, add_item_val = (switch_items[0], switch_items[1])
         s_new = s_current[:]
         s_new[remove_item_idx] = add_item_val
 
@@ -187,8 +139,7 @@ def forming_magic_square(s: list[list[int]]):
     def update_square(
         idx_diff_pairs: list[tuple[int, int]],
         s_current: list[int],
-        max_depth: int,
-        seen_vals: list[tuple[int, int]] = []
+        max_depth: int
     ):
         global total_sum_diffs
         global switch_diffs
@@ -197,44 +148,70 @@ def forming_magic_square(s: list[list[int]]):
         print(f'missing_num: {missing_num}, repeated_vals: {repeated_vals}')
         print('s_current', s_current)
         print('idx_diff_pairs', idx_diff_pairs)
-        # print('seen_vals', seen_vals)
 
         if (total_sum_diffs == 0 or max_depth == 0):
             return switch_diffs
-        
-        next_switch = get_next_switch(idx_diff_pairs, s_current)
-        print('next_switch', next_switch)
 
-        if not next_switch:
+        least_diff_switch = None
+        least_total_sum = float('inf')
+        least_diff_val: int
+        least_diff_sum: int
+        s_final: list[int]
+        diffs_by_line_idxs: list[int]
+
+        for idx_diff_pair in idx_diff_pairs:
+            remove_item_idx: int = idx_diff_pair[0]
+            remove_item_diff: int = idx_diff_pair[1]
+            remove_item_val: int = s_current[remove_item_idx]
+
+            if (
+                remove_item_diff not in missing_num
+                and remove_item_diff not in s_current
+            ):
+                continue
+
+            switch_diff = abs(remove_item_val - remove_item_diff)
+            next_switch = (remove_item_idx, remove_item_diff)
+            s_new = get_next_s(next_switch, s_current)
+            new_diffs_by_line_idxs = get_diffs_by_line_idxs(s_new)
+            new_total_sum_diffs = get_total_diff(new_diffs_by_line_idxs)
+            new_total_sum = new_total_sum_diffs + switch_diff
+
+            print(f'next_switch {next_switch}, new_total_sum {new_total_sum}')
+
+            # this condition is not consider the case where a greater total_sum
+            # is bet on the sake of future better result.
+            if (
+                new_total_sum < least_total_sum
+            ):
+                least_diff_sum = new_total_sum_diffs
+                least_diff_val = switch_diff
+                least_total_sum = new_total_sum
+                least_diff_switch = next_switch
+                s_final = s_new
+                diffs_by_line_idxs = new_diffs_by_line_idxs
+
+        print(f'least_diff_switch {least_diff_switch}, least_total_sum {least_total_sum}')
+
+        if not least_diff_switch:
             return switch_diffs
 
-        s_new = get_next_s(next_switch, s_current)
+        remove_item_idx, add_item_val = least_diff_switch[0], least_diff_switch[1]
+        remove_item_val: int = s_current[remove_item_idx]
 
-        add_item, remove_item = next_switch[1], next_switch[0]
-        add_item_idx, add_item_val = add_item[0], add_item[1]
-        remove_item_val = remove_item[1]
-        seen_vals.append(remove_item)
-
-        new_diffs_by_line_idxs = get_diffs_by_line_idxs(s_new)
-        new_total_sum_diffs = get_total_diff(new_diffs_by_line_idxs)
         new_idx_diff_pairs = get_idx_diff_pairs(
-            new_diffs_by_line_idxs, s_new, seen_vals)
+            diffs_by_line_idxs, s_final, remove_item_idx)
 
-        # print('new_diffs_by_line_idxs', new_diffs_by_line_idxs)
-        print('s_new', s_new)
-        # print('new_total_sum_diffs', new_total_sum_diffs)
-        # print('new_idx_diff_pairs', new_idx_diff_pairs)
-
-        if new_total_sum_diffs >= total_sum_diffs:
+        if least_diff_sum >= total_sum_diffs:
             max_depth -= 1
 
-        total_sum_diffs = new_total_sum_diffs
-        switch_diffs += abs(remove_item_val - add_item_val)
+        total_sum_diffs = least_diff_sum
+        switch_diffs += least_diff_val
 
         print(
             f'max_depth: {max_depth}, switch_diffs: {switch_diffs}, total_sum_diffs: {total_sum_diffs}')
 
-        if add_item_idx is None:
+        if add_item_val in missing_num:
             missing_num.remove(add_item_val)
 
             if remove_item_val not in repeated_vals:
@@ -249,7 +226,7 @@ def forming_magic_square(s: list[list[int]]):
 
             repeated_vals.append(add_item_val)
 
-        return update_square(new_idx_diff_pairs, s_new, max_depth, seen_vals)
+        return update_square(new_idx_diff_pairs, s_final, max_depth)
 
     initial_diffs_by_line_idxs = get_diffs_by_line_idxs(s_flat)
     initial_idx_diff_pairs = get_idx_diff_pairs(
@@ -273,7 +250,7 @@ def forming_magic_square(s: list[list[int]]):
         print('initial_idx_diff_pairs', initial_idx_diff_pairs)
         print('next_idx_diff_pairs', idx_diff_pair)
 
-        result = update_square([idx_diff_pair], s_flat, MAX_DEPTH, [])
+        result = update_square([idx_diff_pair], s_flat, MAX_DEPTH)
 
         if (
             result < final_result
