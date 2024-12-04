@@ -5,8 +5,8 @@ def forming_magic_square(s: list[list[int]]):
     MAGIC_NUM = 15
     MAX_VAL = 10
     MIN_VAL = 0
-    MAX_DEPTH = 5
-    SWITCH_SUMS = 0
+    MAX_DEPTH = 10
+    SWITCH_SUMS = float('inf')
 
     s_flat = [n for ng in s for n in ng]
 
@@ -23,7 +23,6 @@ def forming_magic_square(s: list[list[int]]):
         col_0, col_1, col_2,
         row_0, row_1, row_2,
         diag_0, diag_1]
-
     matrix_lines_by_idx = [
         [3, 0, 6],
         [3, 1],
@@ -77,7 +76,7 @@ def forming_magic_square(s: list[list[int]]):
         last_seen: list[int] = []
     ):
         diff_by_idxs = get_diffs_by_square_idx(diffs_by_line_idxs)
-        print('diffs_by_line_idxs', diffs_by_line_idxs)
+        # print('diffs_by_line_idxs', diffs_by_line_idxs)
         # print('diff_by_idxs', diff_by_idxs)
 
         idx_diff_lines = set()
@@ -90,11 +89,12 @@ def forming_magic_square(s: list[list[int]]):
                 line_diffs_remainder
                 if abs(line_diffs_remainder) < len(line_diffs)
                 else ceil(line_diffs_remainder / len(line_diffs)))
-            idx_diff_val = s_current[idx_diffs] + line_diffs_ave
+            idx_val = s_current[idx_diffs]
+            idx_diff_val = idx_val + line_diffs_ave
             
             if (
                 idx_diffs in last_seen
-                or idx_diff_val == s_current[idx_diffs]
+                or idx_diff_val == idx_val
                 or idx_diff_val <= MIN_VAL or idx_diff_val >= MAX_VAL
             ):
                 continue
@@ -105,8 +105,8 @@ def forming_magic_square(s: list[list[int]]):
             list(idx_diff_lines),
             key=lambda pair: (abs(s_current[pair[0]] - pair[1])))
 
-        return sorted_idx_diff_lines
-        # return idx_diff_lines
+        # return sorted_idx_diff_lines
+        return idx_diff_lines
     
     def get_total_diff(line_diffs: list[int]):
         return sum([abs(diff - MAGIC_NUM) for diff in line_diffs])
@@ -123,13 +123,14 @@ def forming_magic_square(s: list[list[int]]):
 
     def update_square(
         s_current: list[int] = [],
-        switch_diffs: int = SWITCH_SUMS,
+        least_switch_diffs: int = SWITCH_SUMS,
         last_seen: list[int] = [],
         max_depth: int = MAX_DEPTH
     ):
         print('------------------')
         print('s_current', s_current)
         print('max_depth', max_depth)
+        print('last_seen', last_seen)
 
         initial_diffs_by_line_idxs = get_diffs_by_line_idxs(s_current)
         initial_total_sum_diffs = get_total_diff(initial_diffs_by_line_idxs)
@@ -146,15 +147,14 @@ def forming_magic_square(s: list[list[int]]):
         ):
             missing_numbers = get_missing_numbers(s_current)
             return (
-                None
-                if (
-                    initial_total_sum_diffs > 0
-                    or (initial_total_sum_diffs == 0 and len(missing_numbers)))
-                else switch_diffs)
+                float('inf')
+                if initial_total_sum_diffs > 0 or len(missing_numbers)
+                else 0)
 
-        least_diff_val: int = float('inf')
+        least_diff_val: int = least_switch_diffs
 
         for idx_diff_pair in initial_idx_diff_pairs:
+            print('idx_diff_pair', idx_diff_pair)
             remove_item_idx: int = idx_diff_pair[0]
             remove_item_diff: int = idx_diff_pair[1]
             remove_item_val: int = s_current[remove_item_idx]
@@ -163,23 +163,22 @@ def forming_magic_square(s: list[list[int]]):
             next_switch = (remove_item_idx, remove_item_diff)
             s_new = get_next_s(next_switch, s_current)
 
+            new_last_seen = last_seen[:]
+            new_last_seen.append(remove_item_idx)
+
             curr_path_result = update_square(
-                s_new, switch_diff, [remove_item_idx], max_depth - 1)
+                s_new, least_diff_val, new_last_seen, max_depth - 1)
+            switch_diff = switch_diff + curr_path_result
 
-            print(f'**Next Result** {curr_path_result}')
+            print(f'**{idx_diff_pair}** {curr_path_result}, {switch_diff}')
 
-            if (
-                curr_path_result != None
-                and curr_path_result < least_diff_val
-            ):
-                least_diff_val = curr_path_result
-
-        new_switch_diffs = least_diff_val + switch_diffs
+            if switch_diff < least_diff_val:
+                least_diff_val = switch_diff
 
         print(
-            f'max_depth: {max_depth}, new_switch_diffs: {new_switch_diffs}')
+            f'max_depth: {max_depth}, least_diff_val: {least_diff_val}')
 
-        return new_switch_diffs
+        return least_diff_val
 
     return update_square(s_flat, SWITCH_SUMS, max_depth=MAX_DEPTH)
 
